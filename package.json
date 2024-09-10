@@ -2,8 +2,11 @@
   "name": "provable-data-sdk",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepare": "node build-mina-fungible-token.js && cd node_modules/mina-fungible-token && npm run build"
   },
   "keywords": [],
   "author": "",
@@ -15,13 +18,15 @@
     "dotenv": "^16.4.5",
     "mina-signer": "^3.0.5",
     "node-fetch": "^3.3.2",
-    "zkapp-cli": "^0.21.3"
+    "zkapp-cli": "^0.21.3",
+    "mina-fungible-token": "git+https://github.com/MinaFoundation/mina-fungible-token.git#971bf58962d47870d5bcf5a220dc3a80ca5321a0",
+    "zkon-zkapp": "git+https://github.com/ZKON-Network/zkapp.git#devnet"
   },
   "peerDependencies": {
     "o1js": "^1.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.16.5",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
     "eslint": "^8.57.0",

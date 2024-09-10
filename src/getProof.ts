@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Bytes, Field, verify } from 'o1js';
-import { P256Data, PublicArgumets, ZkonZkProgram } from './zkProgram.js';
+import { P256Data, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
 require('dotenv').config();
 
 interface RequestObject {
@@ -32,9 +32,11 @@ export async function getRequestProof(req: RequestObject){
   } 
 }
 
+export default getRequestProof;
+
 //Mockdata
-getRequestProof({
+/*getRequestProof({
   method: "GET",
   baseUrl: "r-api.e-grains.com/v1/esoy/info",
   path: "data,availableSupply"
-});
+});*/
