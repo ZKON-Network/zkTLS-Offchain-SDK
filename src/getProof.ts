@@ -1,22 +1,21 @@
 import axios from 'axios';
 import { Bytes, Field, verify } from 'o1js';
 import { P256Data, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
-require('dotenv').config();
 
-interface RequestObject {
+export interface RequestObject {
   method: string;
   baseUrl: string;  
   path: string;  
 }
-interface OracleResponse {
+export interface OracleResponse {
   p256data: P256Data;
   publicArguments: PublicArgumets;
   decommitment: Field;
 }
 
-export async function getRequestProof(req: RequestObject){
+export async function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject): Promise<OracleResponse> {
   try{    
-    const response: any = await axios.post(process.env.API_BASE_URL!, req, { headers: {'x-api-key':process.env.API_KEY} });
+    const response: any = await axios.post(oracleURL, req, { headers: {'x-api-key':apiKey} });
     const oracleResponse : OracleResponse = response.data;    
     const zkonzkP = await ZkonZkProgram.compile();
     const proof = await ZkonZkProgram.verifySource(
@@ -26,9 +25,14 @@ export async function getRequestProof(req: RequestObject){
     );
     
     const resultZk = await verify(proof.toJSON(), zkonzkP.verificationKey);
+    if (!resultZk) {
+      throw new Error('Unable to verify proof');
+    }
     console.log(oracleResponse);
+    return oracleResponse;
   }catch(error){
     console.log(error);
+    throw error;
   } 
 }
 
