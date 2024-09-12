@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Bytes, Field, verify } from 'o1js';
-import { P256Data, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
+import { ECDSAHelper, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
 
 export interface RequestObject {
   method: string;
@@ -8,7 +8,7 @@ export interface RequestObject {
   path: string;  
 }
 export interface OracleResponse {
-  p256data: P256Data;
+  p256data: ECDSAHelper;
   publicArguments: PublicArgumets;
   decommitment: Field;
 }
