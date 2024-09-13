@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Bytes, Field, verify } from 'o1js';
+import { Field, verify } from 'o1js';
 import { ECDSAHelper, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
 
 export interface RequestObject {
