@@ -16,14 +16,14 @@
     "@noble/curves": "^1.4.2",
     "axios": "^1.7.4",
     "dotenv": "^16.4.5",
+    "mina-fungible-token": "git+https://github.com/MinaFoundation/mina-fungible-token.git#971bf58962d47870d5bcf5a220dc3a80ca5321a0",
     "mina-signer": "^3.0.5",
     "node-fetch": "^3.3.2",
     "zkapp-cli": "^0.21.3",
-    "mina-fungible-token": "git+https://github.com/MinaFoundation/mina-fungible-token.git#971bf58962d47870d5bcf5a220dc3a80ca5321a0",
     "zkon-zkapp": "git+https://github.com/ZKON-Network/zkapp.git#devnet"
   },
   "peerDependencies": {
-    "o1js": "^1.2.0"
+    "o1js": "^1.8.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",

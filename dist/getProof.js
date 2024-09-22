@@ -1,22 +1,49 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRequestProof = getRequestProof;
-const axios_1 = __importDefault(require("axios"));
-const o1js_1 = require("o1js");
-const zkon_zkapp_1 = require("zkon-zkapp");
-async function getRequestProof(apiKey, oracleURL, req) {
+import axios from 'axios';
+import { Field, verify, Crypto, createForeignCurveV2, createEcdsaV2 } from 'o1js';
+import { ECDSAHelper, PublicArgumets, ZkonZkProgram, } from 'zkon-zkapp';
+import { secp256k1 } from '@noble/curves/secp256k1';
+class Secp256k1 extends createForeignCurveV2(Crypto.CurveParams.Secp256k1) {
+}
+class Ecdsa extends createEcdsaV2(Secp256k1) {
+}
+class Scalar extends Secp256k1.Scalar {
+}
+export async function getRequestProof(apiKey, oracleURL, req) {
     try {
-        const response = await axios_1.default.post(oracleURL, req, { headers: { 'x-api-key': apiKey } });
-        const oracleResponse = response.data;
-        const zkonzkP = await zkon_zkapp_1.ZkonZkProgram.compile();
-        const proof = await zkon_zkapp_1.ZkonZkProgram.verifySource(oracleResponse.publicArguments, oracleResponse.decommitment, oracleResponse.p256data);
-        const resultZk = await (0, o1js_1.verify)(proof.toJSON(), zkonzkP.verificationKey);
+        const response = await axios.post(oracleURL, req, { headers: { 'x-api-key': apiKey } });
+        console.log("Recieved data from Oracle.");
+        const responseParsed = JSON.parse(response.data.proof);
+        let oracleResponse = {
+            p256data: responseParsed.p256data,
+            messageHex: responseParsed.messageHex,
+            signatureCompressed: responseParsed.signatureCompressed,
+            publicArguments: responseParsed.publicArguments,
+            decommitment: Field(responseParsed.decommitment),
+        };
+        oracleResponse.publicArguments.commitment = Field(oracleResponse.publicArguments.commitment);
+        oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField);
+        oracleResponse.p256data.publicKey = Secp256k1.fromEthers('0283bbaa97bcdddb1b83029ef3bf80b6d98ac5a396a18ce8e72e59d3ad0cf2e767');
+        const { r, s } = secp256k1.Signature.fromCompact(oracleResponse.signatureCompressed);
+        oracleResponse.p256data.signature = Ecdsa.from({ r: r, s: s });
+        const zkonzkP = await ZkonZkProgram.compile();
+        const publicData = new PublicArgumets({
+            commitment: oracleResponse.publicArguments.commitment,
+            dataField: oracleResponse.publicArguments.dataField
+        });
+        const EcdsaData = new ECDSAHelper({
+            messageHash: new Scalar(BigInt('0x' + oracleResponse.messageHex)),
+            signature: oracleResponse.p256data.signature,
+            publicKey: oracleResponse.p256data.publicKey
+        });
+        console.time("Proof generation in SDK");
+        const proof = await ZkonZkProgram.verifySource(publicData, oracleResponse.decommitment, EcdsaData);
+        console.timeEnd("Proof generation in SDK");
+        console.time("Proof-verified in SDK");
+        const resultZk = await verify(proof.toJSON(), zkonzkP.verificationKey);
         if (!resultZk) {
             throw new Error('Unable to verify proof');
         }
+        console.timeEnd("Proof-verified in SDK");
         console.log(oracleResponse);
         return oracleResponse;
     }
@@ -25,11 +52,11 @@ async function getRequestProof(apiKey, oracleURL, req) {
         throw error;
     }
 }
-exports.default = getRequestProof;
+export default getRequestProof;
 //Mockdata
-/*getRequestProof({
-  method: "GET",
-  baseUrl: "r-api.e-grains.com/v1/esoy/info",
-  path: "data,availableSupply"
-});*/ 
+// getRequestProof('foo178xx','http://127.0.0.1:3000/',{
+//   method: "GET",
+//   baseURL: "r-api.e-grains.com/v1/esoy/info",
+//   path: "data,availableSupply"
+// });
 //# sourceMappingURL=getProof.js.map
