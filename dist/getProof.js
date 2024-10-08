@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Field, verify, Crypto, createForeignCurveV2, createEcdsaV2 } from 'o1js';
-import { ECDSAHelper, PublicArgumets, ZkonZkProgram, } from 'zkon-zkapp';
+import { ECDSAHelper, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
 import { secp256k1 } from '@noble/curves/secp256k1';
 class Secp256k1 extends createForeignCurveV2(Crypto.CurveParams.Secp256k1) {
 }
@@ -8,6 +8,24 @@ class Ecdsa extends createEcdsaV2(Secp256k1) {
 }
 class Scalar extends Secp256k1.Scalar {
 }
+/**
+ * Responsible for requesting & fetching proof of proveable-data feed, using the Zkon Oracle Network.
+ *
+ * @param {string} apiKey - The API Key provided by ZKON. To be used as `x-api-key` in headers.
+ * @param {string} oracleURL - Address of the Oracle. Example `127.0.0.1:5000`
+ * @param {RequestObject} req - The Object which contains the information which is to be fetched and proved.
+ *
+ * @returns An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
+ *
+ * @example
+ * ```ts
+ * getRequestProof('foo178xx','http://127.0.0.1:3000/',{
+ *   method: "GET",
+ *   baseURL: "r-api.e-grains.com/v1/esoy/info",
+ *   path: "data,availableSupply"
+ * })
+ * ```
+ */
 export async function getRequestProof(apiKey, oracleURL, req) {
     try {
         const response = await axios.post(oracleURL, req, { headers: { 'x-api-key': apiKey } });
@@ -20,6 +38,8 @@ export async function getRequestProof(apiKey, oracleURL, req) {
             publicArguments: responseParsed.publicArguments,
             decommitment: Field(responseParsed.decommitment),
         };
+        console.log(responseParsed.decommitment);
+        console.log(oracleResponse.publicArguments.commitment);
         oracleResponse.publicArguments.commitment = Field(oracleResponse.publicArguments.commitment);
         oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField);
         oracleResponse.p256data.publicKey = Secp256k1.fromEthers('0283bbaa97bcdddb1b83029ef3bf80b6d98ac5a396a18ce8e72e59d3ad0cf2e767');
@@ -44,7 +64,6 @@ export async function getRequestProof(apiKey, oracleURL, req) {
             throw new Error('Unable to verify proof');
         }
         console.timeEnd("Proof-verified in SDK");
-        console.log(oracleResponse);
         return oracleResponse;
     }
     catch (error) {
@@ -53,10 +72,4 @@ export async function getRequestProof(apiKey, oracleURL, req) {
     }
 }
 export default getRequestProof;
-//Mockdata
-// getRequestProof('foo178xx','http://127.0.0.1:3000/',{
-//   method: "GET",
-//   baseURL: "r-api.e-grains.com/v1/esoy/info",
-//   path: "data,availableSupply"
-// });
 //# sourceMappingURL=getProof.js.map
