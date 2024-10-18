@@ -42,6 +42,8 @@ export interface RequestObject {
    * ```
    */
   path: string;  
+  /** @optional Request Body */
+  body?: JSON | null;
 }
 
 /**
@@ -95,9 +97,6 @@ export async function getRequestProof(apiKey: string, oracleURL: string, req: Re
       publicArguments:responseParsed.publicArguments,
       decommitment: Field(responseParsed.decommitment),
     }
-
-    console.log(responseParsed.decommitment);
-    console.log(oracleResponse.publicArguments.commitment);
   
     oracleResponse.publicArguments.commitment = Field(oracleResponse.publicArguments.commitment)
     oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField)
