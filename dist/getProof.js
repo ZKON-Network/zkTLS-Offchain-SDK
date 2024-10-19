@@ -28,9 +28,12 @@ class Scalar extends Secp256k1.Scalar {
  */
 export async function getRequestProof(apiKey, oracleURL, req) {
     try {
+        console.time("Recieved data from Oracle");
         const response = await axios.post(oracleURL, req, { headers: { 'x-api-key': apiKey } });
-        console.log("Recieved data from Oracle.");
+        console.timeEnd("Recieved data from Oracle");
+        console.time("Parsing");
         const responseParsed = JSON.parse(response.data.proof);
+        console.timeLog("Parsing", "Response Parsing");
         let oracleResponse = {
             p256data: responseParsed.p256data,
             messageHex: responseParsed.messageHex,
@@ -38,23 +41,27 @@ export async function getRequestProof(apiKey, oracleURL, req) {
             publicArguments: responseParsed.publicArguments,
             decommitment: Field(responseParsed.decommitment),
         };
-        console.log(responseParsed.decommitment);
-        console.log(oracleResponse.publicArguments.commitment);
+        console.timeLog("Parsing", "OracleResponse Parsing");
         oracleResponse.publicArguments.commitment = Field(oracleResponse.publicArguments.commitment);
         oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField);
         oracleResponse.p256data.publicKey = Secp256k1.fromEthers('0283bbaa97bcdddb1b83029ef3bf80b6d98ac5a396a18ce8e72e59d3ad0cf2e767');
         const { r, s } = secp256k1.Signature.fromCompact(oracleResponse.signatureCompressed);
         oracleResponse.p256data.signature = Ecdsa.from({ r: r, s: s });
+        console.timeLog("Parsing", "DataParsing");
         const zkonzkP = await ZkonZkProgram.compile();
+        console.timeLog("Parsing", "ZkProgram Compile");
         const publicData = new PublicArgumets({
             commitment: oracleResponse.publicArguments.commitment,
             dataField: oracleResponse.publicArguments.dataField
         });
+        console.timeLog("Parsing", "PublicArg Parsing");
         const EcdsaData = new ECDSAHelper({
             messageHash: new Scalar(BigInt('0x' + oracleResponse.messageHex)),
             signature: oracleResponse.p256data.signature,
             publicKey: oracleResponse.p256data.publicKey
         });
+        console.timeLog("Parsing", "ECDSA Parsing");
+        console.timeEnd("Parsing");
         console.time("Proof generation in SDK");
         const proof = await ZkonZkProgram.verifySource(publicData, oracleResponse.decommitment, EcdsaData);
         console.timeEnd("Proof generation in SDK");
