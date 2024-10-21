@@ -3,3 +3,5 @@ node_modules
 .DS_Store
 test.ts
 server.js
+dist/test.js
+dist/test.js.map
