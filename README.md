@@ -1,4 +1,4 @@
-# ZKON Offchain Integration
+# zkTLS Offchain SDK | ZKON
 ZKON SDK is a lightweight offchain software development kit that allows developers to integrate provable data transfer records into their services over HTTPS connections. By utilizing this SDK, you can easily verify data transfers with cryptographic proofs, ensuring secure and reliable operations. The SDK is designed for flexibility, enabling it to be seamlessly incorporated into various use cases where off-chain provability is required.
 
 ## How to fetch off-chain provable data
