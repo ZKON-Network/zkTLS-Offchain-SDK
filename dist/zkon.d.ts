@@ -1,4 +1,5 @@
 import { OracleResponse, RequestObject } from './getProof';
+
 /**
  *
  * The ZKON Class is responsible for working of the provable-data-sdk provided by Zkon Network. It is a simple class which recieves an
