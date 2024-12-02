@@ -11,13 +11,33 @@ class Scalar extends Secp256k1.Scalar {}
  * Interface representing the notation in which a Request Object is constructed.
  * 
  * @example
- * ```ts
  * const exampleObject: RequestObject = {
  *   method: "GET",
  *   baseURL: "r-api.e-grains.com/v1/esoy/info",
  *   path: "data,availableSupply"
  * }
- * ```
+ * 
+ * 
+ * @example 
+ * const exampleObjectWithBody: RequestObject = {
+ *  method: "POST",
+ *  baseURL: "data-point/url",
+ *  path: "data,path,in,response",
+ *  body:{
+ *    "name":"John Doe"
+ *    "password":"pass"
+ *  }
+ * }
+ * 
+ * @example
+ * 
+ * const exampleObjectWithHeaders: RequestObject = {
+ *  method:"GET",
+ *  baseURL:"api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
+ *  path:"price",
+ *  headers:{"Host":"api.binance.com"}
+ * };
+ * 
  */
 export interface RequestObject {
   /** HTTPs Method to access the Data Feed API. */
@@ -44,6 +64,18 @@ export interface RequestObject {
   path: string;  
   /** @optional Request Body */
   body?:  Record<string, any>| null;
+  /** 
+   * @optional 
+   * Headers Object.
+   * Add Headers in form of { "Key1": "Value1", ..."KeyN":"ValueN" } 
+   * 
+   * @example
+   * "headers":{
+   *  "x-powered-by": "Express",
+   *  "x-rapidapi-version": "1.2.6"
+   * }
+  */
+  headers?: Record<string, any>| null;
 }
 
 /**
@@ -104,16 +136,12 @@ export async function getRequestProof(apiKey: string, oracleURL: string, req: Re
     }
     console.timeLog("Parsing", "OracleResponse Parsing");
 
-  
     oracleResponse.publicArguments.commitment = Field(oracleResponse.publicArguments.commitment)
     oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField)
     oracleResponse.p256data.publicKey = Secp256k1.fromEthers('0283bbaa97bcdddb1b83029ef3bf80b6d98ac5a396a18ce8e72e59d3ad0cf2e767')
     const {r,s} = secp256k1.Signature.fromCompact(oracleResponse.signatureCompressed);
     oracleResponse.p256data.signature = Ecdsa.from({r:r,s:s})
     console.timeLog("Parsing", "DataParsing");
-
-    const zkonzkP = await ZkonZkProgram.compile();
-    console.timeLog("Parsing", "ZkProgram Compile");
 
     const publicData = new PublicArgumets({
       commitment: oracleResponse.publicArguments.commitment,
@@ -130,6 +158,8 @@ export async function getRequestProof(apiKey: string, oracleURL: string, req: Re
     console.timeEnd("Parsing")
 
     console.time("Proof generation in SDK")
+    const checker = await ZkonZkProgram.compile()
+    
     const proof = await ZkonZkProgram.verifySource(
       publicData,
       oracleResponse.decommitment,
@@ -138,12 +168,13 @@ export async function getRequestProof(apiKey: string, oracleURL: string, req: Re
     console.timeEnd("Proof generation in SDK")
     
     console.time("Proof-verified in SDK")
-    const resultZk = await verify(proof.toJSON(), zkonzkP.verificationKey);
+    const resultZk = await verify(proof.toJSON(), checker.verificationKey);
+    console.timeEnd("Proof-verified in SDK")
+
+    console.log("Proof Verified?",resultZk);
     if (!resultZk) {
       throw new Error('Unable to verify proof');
     }
-    console.timeEnd("Proof-verified in SDK")
-
     return oracleResponse;
 
   }catch(error){

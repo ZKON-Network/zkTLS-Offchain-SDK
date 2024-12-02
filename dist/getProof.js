@@ -48,8 +48,6 @@ export async function getRequestProof(apiKey, oracleURL, req) {
         const { r, s } = secp256k1.Signature.fromCompact(oracleResponse.signatureCompressed);
         oracleResponse.p256data.signature = Ecdsa.from({ r: r, s: s });
         console.timeLog("Parsing", "DataParsing");
-        const zkonzkP = await ZkonZkProgram.compile();
-        console.timeLog("Parsing", "ZkProgram Compile");
         const publicData = new PublicArgumets({
             commitment: oracleResponse.publicArguments.commitment,
             dataField: oracleResponse.publicArguments.dataField
@@ -63,14 +61,16 @@ export async function getRequestProof(apiKey, oracleURL, req) {
         console.timeLog("Parsing", "ECDSA Parsing");
         console.timeEnd("Parsing");
         console.time("Proof generation in SDK");
+        const checker = await ZkonZkProgram.compile();
         const proof = await ZkonZkProgram.verifySource(publicData, oracleResponse.decommitment, EcdsaData);
         console.timeEnd("Proof generation in SDK");
         console.time("Proof-verified in SDK");
-        const resultZk = await verify(proof.toJSON(), zkonzkP.verificationKey);
+        const resultZk = await verify(proof.toJSON(), checker.verificationKey);
+        console.timeEnd("Proof-verified in SDK");
+        console.log("Proof Verified?", resultZk);
         if (!resultZk) {
             throw new Error('Unable to verify proof');
         }
-        console.timeEnd("Proof-verified in SDK");
         return oracleResponse;
     }
     catch (error) {
