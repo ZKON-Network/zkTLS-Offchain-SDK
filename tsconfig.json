@@ -18,6 +18,9 @@
     "./*.js",
     "src/**/*.ts",
     "test/**/*.ts",
+  ],
+  "exclude": [
+    "src/example.ts"
   ]
 }
 
