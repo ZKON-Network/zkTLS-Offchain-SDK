@@ -1,6 +1,5 @@
 import { Field } from 'o1js';
 import { ECDSAHelper, PublicArgumets } from 'zkon-zkapp';
-
 /**
  * Interface representing the notation in which a Request Object is constructed.
  *
@@ -106,6 +105,5 @@ export interface OracleResponse {
  * })
  * ```
  */
-
 export declare function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject): Promise<OracleResponse>;
 export default getRequestProof;

@@ -1,3 +1,3 @@
-import { getRequestProof, OracleResponse, RequestObject } from './getProof';
-import ZKON from './zkon';
+import { getRequestProof, OracleResponse, RequestObject } from './getProof.js';
+import ZKON from './zkon.js';
 export { ZKON, getRequestProof, OracleResponse, RequestObject };

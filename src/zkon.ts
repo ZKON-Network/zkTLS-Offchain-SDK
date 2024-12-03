@@ -1,4 +1,4 @@
-import getRequestProof, { OracleResponse, RequestObject } from './getProof';
+import getRequestProof, { OracleResponse, RequestObject } from './getProof.js';
 
 /**
  * 
