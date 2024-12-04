@@ -1,4 +1,4 @@
-import getRequestProof, { OracleResponse, RequestObject } from './getProof';
+import getRequestProof, { OracleResponse, RequestObject } from './getProof.js';
 
 /**
  * 
@@ -36,6 +36,8 @@ class ZKON {
     }
 
     /**
+     * Request data from a data-source, and get a ZK Proof about the authenticity of the data-transfer, 
+     * and the data.
      * 
      * @param req 
      * The Object notation in which data is provided to the Zkon-Provable API.
@@ -62,6 +64,12 @@ class ZKON {
     async request(req: RequestObject): Promise<OracleResponse>  {
         return getRequestProof(this.apiKey, this.oracleURL, req);
     }
+
+    async requestStringProof(req: RequestObject): Promise<OracleResponse>  {
+        return getRequestProof(this.apiKey, this.oracleURL, req, "string-proof");
+    }
+
+    
 }
 
 export default ZKON;

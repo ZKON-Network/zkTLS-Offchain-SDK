@@ -1,6 +1,5 @@
 import { Field } from 'o1js';
-import { ECDSAHelper, PublicArgumets } from 'zkon-zkapp';
-
+import { ECDSAHelper } from 'zkon-zkapp';
 /**
  * Interface representing the notation in which a Request Object is constructed.
  *
@@ -70,6 +69,8 @@ export interface RequestObject {
      * }
     */
     headers?: Record<string, any> | null;
+    /**  */
+    proofType?: "string-proof" | "field-proof";
 }
 /**
  * Interface representing the response object from Zkon Oracle,
@@ -84,7 +85,7 @@ export interface OracleResponse {
     /** Message of the ECDSA Signature */
     messageHex: string;
     /** o1js specific data to help with ECDSA Verification.*/
-    publicArguments: PublicArgumets;
+    publicArguments: Record<string, any>;
     /** o1js specific data to help with ECDSA Verification.*/
     decommitment: Field;
 }
@@ -106,6 +107,5 @@ export interface OracleResponse {
  * })
  * ```
  */
-
-export declare function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject): Promise<OracleResponse>;
+export declare function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject, proofType?: string): Promise<OracleResponse>;
 export default getRequestProof;

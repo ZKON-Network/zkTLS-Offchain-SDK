@@ -52,6 +52,17 @@ async function API_with_headers(){
     console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8)
 }
 
+async function basic_string_API_request(){
+    const SDK_Response = await zkon.requestStringProof({
+        method:"GET",
+        baseURL:"swapi.dev/api/people/1",
+        path:"name",
+    });
+
+    console.log("DataField:",SDK_Response.publicArguments.dataField)
+}
+
 //basic_API_request()
 //API_with_body()
-API_with_headers()
+//API_with_headers()
+//basic_string_API_request()

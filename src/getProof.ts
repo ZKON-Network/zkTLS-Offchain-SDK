@@ -1,7 +1,9 @@
 import axios from 'axios';
-import { Field, verify, Crypto, createForeignCurveV2, createEcdsaV2 } from 'o1js';
-import { ECDSAHelper, PublicArgumets, ZkonZkProgram } from 'zkon-zkapp';
+import { Field, verify, Crypto, createForeignCurveV2, createEcdsaV2, UInt8 } from 'o1js';
+import { ECDSAHelper } from 'zkon-zkapp';
 import { secp256k1 } from '@noble/curves/secp256k1';
+import { ZkonZkProgram, PublicArgumetsFields } from './zkPrograms/zkProgram-fields';
+import { ZkonZkProgramString, PublicArgumetsString} from './zkPrograms/zkProgram-strings';
 
 class Secp256k1 extends createForeignCurveV2(Crypto.CurveParams.Secp256k1) {}
 class Ecdsa extends createEcdsaV2(Secp256k1) {}
@@ -76,6 +78,8 @@ export interface RequestObject {
    * }
   */
   headers?: Record<string, any>| null;
+  /**  */
+  proofType?: "string-proof" | "field-proof";
 }
 
 /**
@@ -92,7 +96,7 @@ export interface OracleResponse {
   /** Message of the ECDSA Signature */
   messageHex: string;
   /** o1js specific data to help with ECDSA Verification.*/
-  publicArguments: PublicArgumets;
+  publicArguments: Record<string, any>
   /** o1js specific data to help with ECDSA Verification.*/
   decommitment: Field;
 }
@@ -116,10 +120,10 @@ export interface OracleResponse {
  * ```
  */
 
-export async function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject): Promise<OracleResponse> {
+export async function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject, proofType: string = "field-proof"): Promise<OracleResponse> {
   try{
     console.time("Recieved data from Oracle")    
-    const response: any = await axios.post(oracleURL, req, { headers: {'x-api-key':apiKey} });
+    const response: any = await axios.post(oracleURL, {...req,...{proofType: proofType}}, { headers: {'x-api-key':apiKey} });
     console.timeEnd("Recieved data from Oracle")
 
     console.time("Parsing")
@@ -137,45 +141,94 @@ export async function getRequestProof(apiKey: string, oracleURL: string, req: Re
     console.timeLog("Parsing", "OracleResponse Parsing");
 
     oracleResponse.publicArguments.commitment = Field(oracleResponse.publicArguments.commitment)
-    oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField)
+    //oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField) //This needs to change according to proofType. 
     oracleResponse.p256data.publicKey = Secp256k1.fromEthers('0283bbaa97bcdddb1b83029ef3bf80b6d98ac5a396a18ce8e72e59d3ad0cf2e767')
     const {r,s} = secp256k1.Signature.fromCompact(oracleResponse.signatureCompressed);
     oracleResponse.p256data.signature = Ecdsa.from({r:r,s:s})
     console.timeLog("Parsing", "DataParsing");
-
-    const publicData = new PublicArgumets({
-      commitment: oracleResponse.publicArguments.commitment,
-      dataField: oracleResponse.publicArguments.dataField
-    })
-    console.timeLog("Parsing", "PublicArg Parsing");
 
     const EcdsaData = new ECDSAHelper({
       messageHash: new Scalar(BigInt('0x'+oracleResponse.messageHex)),
       signature: oracleResponse.p256data.signature,
       publicKey: oracleResponse.p256data.publicKey
     })
-    console.timeLog("Parsing", "ECDSA Parsing");
-    console.timeEnd("Parsing")
+    console.timeLog("Parsing", "ECDSA Parsed");
 
-    console.time("Proof generation in SDK")
-    const checker = await ZkonZkProgram.compile()
-    
-    const proof = await ZkonZkProgram.verifySource(
-      publicData,
-      oracleResponse.decommitment,
-      EcdsaData
-    );
-    console.timeEnd("Proof generation in SDK")
-    
-    console.time("Proof-verified in SDK")
-    const resultZk = await verify(proof.toJSON(), checker.verificationKey);
-    console.timeEnd("Proof-verified in SDK")
+    //Conditionally execute the proof-generation.
+    let PublicArgumets;
+    if(proofType === "string-proof"){
 
-    console.log("Proof Verified?",resultZk);
-    if (!resultZk) {
-      throw new Error('Unable to verify proof');
+      console.log("Proof-Type:", proofType)
+      const maxLengthString = 1000
+      let stringData = String(oracleResponse.publicArguments.dataField)
+      let string_val: UInt8[] = stringData.split('').map(x => UInt8.from(x.charCodeAt(0)))
+
+      for(let i=string_val.length; i<maxLengthString; i++){
+        string_val.push(UInt8.from(0))
+      }
+
+      const zkProgram = ZkonZkProgramString
+      PublicArgumets = new PublicArgumetsString({
+        commitment: oracleResponse.publicArguments.commitment,
+        dataField: string_val
+      })
+      console.timeLog("Parsing", "PublicArg Parsed");
+      console.timeEnd("Parsing")
+
+      const checker = await zkProgram.compile()
+      
+      console.time("Proof generation in SDK")
+      const proof = await zkProgram.verifySource(
+        PublicArgumets,
+        oracleResponse.decommitment,
+        EcdsaData
+      )
+      console.timeEnd("Proof generation in SDK")
+
+      console.time("Proof-verified in SDK")
+      const resultZk = await verify(proof.toJSON(), checker.verificationKey);
+      console.timeEnd("Proof-verified in SDK")
+
+      if (!resultZk) {
+        throw new Error('Unable to verify proof');
+      }
+      return oracleResponse;
+
+    }else{
+      
+      console.log("Proof-Type:", proofType)
+      const zkProgram = ZkonZkProgram
+      oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField) //This needs to change according to proofType. 
+
+      PublicArgumets = new PublicArgumetsFields({
+        commitment: oracleResponse.publicArguments.commitment,
+        dataField: oracleResponse.publicArguments.dataField
+      })
+      console.timeLog("Parsing", "PublicArg Parsed");
+      console.timeEnd("Parsing")
+
+      const checker = await zkProgram.compile()
+      
+      console.time("Proof generation in SDK")
+      const proof = await zkProgram.verifySource(
+        PublicArgumets,
+        oracleResponse.decommitment,
+        EcdsaData
+      )
+      console.timeEnd("Proof generation in SDK")
+
+      console.time("Proof-verified in SDK")
+      const resultZk = await verify(proof.toJSON(), checker.verificationKey);
+      console.timeEnd("Proof-verified in SDK")
+
+      if (!resultZk) {
+        throw new Error('Unable to verify proof');
+      }
+      return oracleResponse;
+
+
     }
-    return oracleResponse;
+
 
   }catch(error){
     console.log(error);

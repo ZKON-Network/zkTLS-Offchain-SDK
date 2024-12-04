@@ -1,4 +1,4 @@
-import getRequestProof from './getProof';
+import getRequestProof from './getProof.js';
 /**
  *
  * The ZKON Class is responsible for working of the provable-data-sdk provided by Zkon Network. It is a simple class which recieves an
@@ -23,6 +23,8 @@ class ZKON {
         this.oracleURL = oracleURL;
     }
     /**
+     * Request data from a data-source, and get a ZK Proof about the authenticity of the data-transfer,
+     * and the data.
      *
      * @param req
      * The Object notation in which data is provided to the Zkon-Provable API.
@@ -47,6 +49,9 @@ class ZKON {
      */
     async request(req) {
         return getRequestProof(this.apiKey, this.oracleURL, req);
+    }
+    async requestStringProof(req) {
+        return getRequestProof(this.apiKey, this.oracleURL, req, "string-proof");
     }
 }
 export default ZKON;

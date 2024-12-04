@@ -12,7 +12,7 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
-    "declarationDir": "./dist"
+    "declarationDir": "./dist",
   },
   "include": [
     "./*.js",
