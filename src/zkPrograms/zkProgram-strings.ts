@@ -18,7 +18,6 @@ class PublicArgumetsString extends Struct({
 const ZkonZkProgramString = ZkProgram({
     name:'zkon-proof-string',
     publicInput: PublicArgumetsString,
-    publicOutput: Bool,
   
     methods:{
       verifySource:{
@@ -29,7 +28,8 @@ const ZkonZkProgramString = ZkProgram({
           ECDSASign:ECDSAHelper,
         ){
           //decommitment.assertEquals(commitment.commitment,"Response from proof-server invalid.");
-          return ECDSASign.signature.verifySignedHashV2(ECDSASign.messageHash, ECDSASign.publicKey)
+          const checkSignature = ECDSASign.signature.verifySignedHashV2(ECDSASign.messageHash, ECDSASign.publicKey)
+          return checkSignature.assertEquals(true,"Signature Verification Invalid!")
         }
       }
     }
