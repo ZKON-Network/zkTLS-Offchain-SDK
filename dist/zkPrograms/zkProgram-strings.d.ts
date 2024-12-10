@@ -166,7 +166,7 @@ declare const ZkonZkProgramString: {
             hash: import("o1js/dist/node/lib/provable/field").Field;
         };
     }>;
-    verify: (proof: import("o1js").Proof<PublicArgumetsString, import("o1js/dist/node/lib/provable/bool").Bool>) => Promise<boolean>;
+    verify: (proof: import("o1js").Proof<PublicArgumetsString, void>) => Promise<boolean>;
     digest: () => Promise<string>;
     analyzeMethods: () => Promise<{
         verifySource: {
@@ -179,16 +179,16 @@ declare const ZkonZkProgramString: {
         };
     }>;
     publicInputType: typeof PublicArgumetsString;
-    publicOutputType: typeof import("o1js/dist/node/lib/provable/bool").Bool & ((x: boolean | import("o1js/dist/node/lib/provable/core/fieldvar").FieldVar | import("o1js/dist/node/lib/provable/bool").Bool) => import("o1js/dist/node/lib/provable/bool").Bool);
+    publicOutputType: import("o1js/dist/node/lib/provable/types/struct").ProvablePureExtended<void, void, null>;
     privateInputTypes: {
         verifySource: [typeof import("o1js/dist/node/lib/provable/field").Field & ((x: string | number | bigint | import("o1js/dist/node/lib/provable/field").Field | import("o1js/dist/node/lib/provable/core/fieldvar").FieldVar | import("o1js/dist/node/lib/provable/core/fieldvar").FieldConst) => import("o1js/dist/node/lib/provable/field").Field), typeof ECDSAHelper];
     };
     rawMethods: {
-        verifySource: (publicInput: PublicArgumetsString, ...args: [import("o1js/dist/node/lib/provable/field").Field, ECDSAHelper] & any[]) => Promise<import("o1js/dist/node/lib/provable/bool").Bool>;
+        verifySource: (publicInput: PublicArgumetsString, ...args: [import("o1js/dist/node/lib/provable/field").Field, ECDSAHelper] & any[]) => Promise<void>;
     };
     proofsEnabled: boolean;
     setProofsEnabled(proofsEnabled: boolean): void;
 } & {
-    verifySource: (publicInput: PublicArgumetsString, ...args: [import("o1js/dist/node/lib/provable/field").Field, ECDSAHelper] & any[]) => Promise<import("o1js").Proof<PublicArgumetsString, import("o1js/dist/node/lib/provable/bool").Bool>>;
+    verifySource: (publicInput: PublicArgumetsString, ...args: [import("o1js/dist/node/lib/provable/field").Field, ECDSAHelper] & any[]) => Promise<import("o1js").Proof<PublicArgumetsString, void>>;
 };
 export { ZkonZkProgramString, PublicArgumetsString, ECDSAHelper };

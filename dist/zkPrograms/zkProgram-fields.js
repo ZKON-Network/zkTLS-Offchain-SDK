@@ -1,4 +1,4 @@
-import { Field, ZkProgram, Struct, createEcdsaV2, createForeignCurveV2, Crypto, Bool } from 'o1js';
+import { Field, ZkProgram, Struct, createEcdsaV2, createForeignCurveV2, Crypto } from 'o1js';
 class Secp256k1 extends createForeignCurveV2(Crypto.CurveParams.Secp256k1) {
 }
 class Scalar extends Secp256k1.Scalar {
@@ -19,13 +19,13 @@ class PublicArgumetsFields extends Struct({
 const ZkonZkProgram = ZkProgram({
     name: 'zkon-proof',
     publicInput: PublicArgumetsFields,
-    publicOutput: Bool,
     methods: {
         verifySource: {
             privateInputs: [Field, ECDSAHelper],
             async method(commitment, decommitment, ECDSASign) {
                 //decommitment.assertEquals(commitment.commitment,"Response from proof-server invalid.");
-                return ECDSASign.signature.verifySignedHashV2(ECDSASign.messageHash, ECDSASign.publicKey);
+                const checkSignature = ECDSASign.signature.verifySignedHashV2(ECDSASign.messageHash, ECDSASign.publicKey);
+                return checkSignature.assertEquals(true, "Signature Verification Invalid!");
             }
         }
     }

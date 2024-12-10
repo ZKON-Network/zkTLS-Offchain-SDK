@@ -2,8 +2,8 @@ import axios from 'axios';
 import { Field, verify, Crypto, createForeignCurveV2, createEcdsaV2, UInt8 } from 'o1js';
 import { ECDSAHelper } from 'zkon-zkapp';
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { ZkonZkProgram, PublicArgumetsFields } from './zkPrograms/zkProgram-fields';
-import { ZkonZkProgramString, PublicArgumetsString } from './zkPrograms/zkProgram-strings';
+import { ZkonZkProgram, PublicArgumetsFields } from './zkPrograms/zkProgram-fields.js';
+import { ZkonZkProgramString, PublicArgumetsString } from './zkPrograms/zkProgram-strings.js';
 class Secp256k1 extends createForeignCurveV2(Crypto.CurveParams.Secp256k1) {
 }
 class Ecdsa extends createEcdsaV2(Secp256k1) {
