@@ -1,5 +1,5 @@
-import ZKON from "./zkon";
-import getRequestProof, { OracleResponse, RequestObject } from './getProof';
+import ZKON from "./zkon.js";
+import getRequestProof, { OracleResponse, RequestObject } from './getProof.js';
 
 const apiKey = 'foo178xx'; 
 const oracle = 'http://127.0.0.1:3000/'
