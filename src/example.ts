@@ -1,5 +1,6 @@
 import ZKON from "./zkon.js";
-import getRequestProof, { OracleResponse, RequestObject } from './getProof.js';
+import { OracleResponse, RequestObject, generateAndVerifyProof } from './getProof.js';
+import {Field} from 'o1js'
 
 const apiKey = 'foo178xx'; 
 const oracle = 'http://127.0.0.1:3000/'
@@ -12,6 +13,7 @@ async function basic_API_request(){
         path:"price",
     });
 
+    console.log(typeof(SDK_Response.publicArguments.dataField));
     console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8)
 }
 
@@ -60,9 +62,30 @@ async function basic_string_API_request(){
     });
 
     console.log("DataField:",SDK_Response.publicArguments.dataField)
+    console.log(typeof(SDK_Response.publicArguments.dataField))
+}
+
+async function basic_API_deferred(){
+    console.time("e2e Run Timing:")
+    const SDK_Response = await zkon.request({
+        method:"GET",
+        baseURL:"api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
+        path:"price",
+    }, true);
+
+    console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8)
+    //console.log(SDK_Response.publicArguments.dataField instanceof Field)
+    console.timeEnd("e2e Run Timing:")
+
+    console.time("Deferred proof generation")
+    const proofStatus = await generateAndVerifyProof("field-proof", SDK_Response)
+    console.timeEnd("Deferred proof generation")
+
+    console.log("Proof-status:", proofStatus);
 }
 
 //basic_API_request()
 //API_with_body()
 //API_with_headers()
 //basic_string_API_request()
+basic_API_deferred()
