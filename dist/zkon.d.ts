@@ -51,8 +51,14 @@ declare class ZKON {
      * ```
      *
      * @returns
+     * OracleRespone object.
      */
-    request(req: RequestObject): Promise<OracleResponse>;
-    requestStringProof(req: RequestObject): Promise<OracleResponse>;
+    request(req: RequestObject, proofDeferred?: boolean): Promise<OracleResponse>;
+    /**
+     * Used to fetch string-data from a data-source.
+     * @param req
+     * @returns
+     */
+    requestStringProof(req: RequestObject, proofDeferred?: boolean): Promise<OracleResponse>;
 }
 export default ZKON;

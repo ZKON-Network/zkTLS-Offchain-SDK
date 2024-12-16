@@ -46,12 +46,18 @@ class ZKON {
      * ```
      *
      * @returns
+     * OracleRespone object.
      */
-    async request(req) {
-        return getRequestProof(this.apiKey, this.oracleURL, req);
+    async request(req, proofDeferred = false) {
+        return getRequestProof(this.apiKey, this.oracleURL, req, { proofDeferred });
     }
-    async requestStringProof(req) {
-        return getRequestProof(this.apiKey, this.oracleURL, req, "string-proof");
+    /**
+     * Used to fetch string-data from a data-source.
+     * @param req
+     * @returns
+     */
+    async requestStringProof(req, proofDeferred = false) {
+        return getRequestProof(this.apiKey, this.oracleURL, req, { proofDeferred, proofType: "string-proof" });
     }
 }
 export default ZKON;

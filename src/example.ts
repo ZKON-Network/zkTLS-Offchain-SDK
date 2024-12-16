@@ -7,14 +7,16 @@ const oracle = 'http://127.0.0.1:3000/'
 const zkon =  new ZKON(apiKey, oracle);
 
 async function basic_API_request(){
+    console.log("Without Deferred Proof-Generation:\n")
+    console.time("E2E Run:")
     const SDK_Response = await zkon.request({
         method:"GET",
         baseURL:"api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
         path:"price",
     });
-
     console.log(typeof(SDK_Response.publicArguments.dataField));
-    console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8)
+    console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8,"\n")
+    console.timeEnd("E2E Run:")
 }
 
 async function API_with_body(){
@@ -66,22 +68,25 @@ async function basic_string_API_request(){
 }
 
 async function basic_API_deferred(){
+    console.log("With Deferred Proof-Generation:\n")
     console.time("e2e Run Timing:")
+    console.time("SDK Response:")
     const SDK_Response = await zkon.request({
         method:"GET",
         baseURL:"api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
         path:"price",
     }, true);
-
-    console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8)
+    console.timeEnd("SDK Response:")
+    console.log("DataField:",Number(SDK_Response.publicArguments.dataField.toBigInt())/1e8,"\n")
     //console.log(SDK_Response.publicArguments.dataField instanceof Field)
-    console.timeEnd("e2e Run Timing:")
+   
 
-    console.time("Deferred proof generation")
+    console.time("Deferred Proof generation")
     const proofStatus = await generateAndVerifyProof("field-proof", SDK_Response)
-    console.timeEnd("Deferred proof generation")
-
     console.log("Proof-status:", proofStatus);
+    console.timeEnd("Deferred Proof generation")
+    console.timeEnd("e2e Run Timing:")
+   
 }
 
 //basic_API_request()

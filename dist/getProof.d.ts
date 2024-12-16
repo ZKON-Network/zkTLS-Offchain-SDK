@@ -95,6 +95,7 @@ export interface OracleResponse {
  * @param {string} apiKey - The API Key provided by ZKON. To be used as `x-api-key` in headers.
  * @param {string} oracleURL - Address of the Oracle. Example `127.0.0.1:5000`
  * @param {RequestObject} req - The Object which contains the information which is to be fetched and proved.
+ * @param {boolean} proofDeferred - `Optional` parameter which can defer the proof genretaion, making the SDK more versatile.
  *
  * @returns An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
  *
@@ -107,5 +108,9 @@ export interface OracleResponse {
  * })
  * ```
  */
-export declare function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject, proofType?: string): Promise<OracleResponse>;
+export declare function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject, optional?: {
+    proofDeferred?: boolean;
+    proofType?: string;
+}): Promise<OracleResponse>;
+export declare function generateAndVerifyProof(proofType: string | undefined, oracleResponse: OracleResponse): Promise<boolean>;
 export default getRequestProof;

@@ -125,9 +125,12 @@ export async function getRequestProof(
   apiKey: string, 
   oracleURL: string, 
   req: RequestObject, 
-  proofDeferred: boolean,
-  proofType: string = "field-proof"
+  optional?: {
+    proofDeferred?: boolean,
+    proofType?: string
+  }
 ): Promise<OracleResponse> {
+  const { proofDeferred = false, proofType = "field-proof" } = optional || {}; // Default values
   try{
     console.time("Recieved data from Oracle")    
     const response: any = await axios.post(oracleURL, {...req,...{proofType: proofType}}, { headers: {'x-api-key':apiKey} });

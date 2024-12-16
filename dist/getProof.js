@@ -16,6 +16,7 @@ class Scalar extends Secp256k1.Scalar {
  * @param {string} apiKey - The API Key provided by ZKON. To be used as `x-api-key` in headers.
  * @param {string} oracleURL - Address of the Oracle. Example `127.0.0.1:5000`
  * @param {RequestObject} req - The Object which contains the information which is to be fetched and proved.
+ * @param {boolean} proofDeferred - `Optional` parameter which can defer the proof genretaion, making the SDK more versatile.
  *
  * @returns An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
  *
@@ -28,7 +29,8 @@ class Scalar extends Secp256k1.Scalar {
  * })
  * ```
  */
-export async function getRequestProof(apiKey, oracleURL, req, proofType = "field-proof") {
+export async function getRequestProof(apiKey, oracleURL, req, optional) {
+    const { proofDeferred = false, proofType = "field-proof" } = optional || {}; // Default values
     try {
         console.time("Recieved data from Oracle");
         const response = await axios.post(oracleURL, { ...req, ...{ proofType: proofType } }, { headers: { 'x-api-key': apiKey } });
@@ -57,9 +59,12 @@ export async function getRequestProof(apiKey, oracleURL, req, proofType = "field
         });
         console.timeLog("Parsing", "ECDSA Parsed");
         //Conditionally execute the proof-generation.
-        let PublicArgumets;
+        //let PublicArgumets;
         if (proofType === "string-proof") {
             console.log("Proof-Type:", proofType);
+            if (proofDeferred) {
+                return oracleResponse;
+            }
             const maxLengthString = 1000;
             let stringData = String(oracleResponse.publicArguments.dataField);
             let string_val = stringData.split('').map(x => UInt8.from(x.charCodeAt(0)));
@@ -67,7 +72,7 @@ export async function getRequestProof(apiKey, oracleURL, req, proofType = "field
                 string_val.push(UInt8.from(0));
             }
             const zkProgram = ZkonZkProgramString;
-            PublicArgumets = new PublicArgumetsString({
+            const PublicArgumets = new PublicArgumetsString({
                 commitment: oracleResponse.publicArguments.commitment,
                 dataField: string_val
             });
@@ -89,7 +94,10 @@ export async function getRequestProof(apiKey, oracleURL, req, proofType = "field
             console.log("Proof-Type:", proofType);
             const zkProgram = ZkonZkProgram;
             oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField); //This needs to change according to proofType. 
-            PublicArgumets = new PublicArgumetsFields({
+            if (proofDeferred) {
+                return oracleResponse;
+            }
+            const PublicArgumets = new PublicArgumetsFields({
                 commitment: oracleResponse.publicArguments.commitment,
                 dataField: oracleResponse.publicArguments.dataField
             });
@@ -111,6 +119,48 @@ export async function getRequestProof(apiKey, oracleURL, req, proofType = "field
     catch (error) {
         console.log(error);
         throw error;
+    }
+}
+export async function generateAndVerifyProof(proofType = "field-proof", oracleResponse) {
+    const EcdsaData = new ECDSAHelper({
+        messageHash: new Scalar(BigInt('0x' + oracleResponse.messageHex)),
+        signature: oracleResponse.p256data.signature,
+        publicKey: oracleResponse.p256data.publicKey
+    });
+    if (proofType === "string-proof") {
+        const maxLengthString = 1000;
+        let stringData = String(oracleResponse.publicArguments.dataField);
+        let string_val = stringData.split('').map(x => UInt8.from(x.charCodeAt(0)));
+        for (let i = string_val.length; i < maxLengthString; i++) {
+            string_val.push(UInt8.from(0));
+        }
+        const zkProgram = ZkonZkProgramString;
+        const PublicArgumets = new PublicArgumetsString({
+            commitment: oracleResponse.publicArguments.commitment,
+            dataField: string_val
+        });
+        const checker = await zkProgram.compile();
+        const proof = await zkProgram.verifySource(PublicArgumets, oracleResponse.decommitment, EcdsaData);
+        const resultZk = await verify(proof.toJSON(), checker.verificationKey);
+        if (!resultZk) {
+            throw new Error('Unable to verify proof');
+        }
+        return true;
+    }
+    else {
+        const zkProgram = ZkonZkProgram;
+        oracleResponse.publicArguments.dataField = Field(oracleResponse.publicArguments.dataField); //This needs to change according to proofType. 
+        const PublicArgumets = new PublicArgumetsFields({
+            commitment: oracleResponse.publicArguments.commitment,
+            dataField: oracleResponse.publicArguments.dataField
+        });
+        const checker = await zkProgram.compile();
+        const proof = await zkProgram.verifySource(PublicArgumets, oracleResponse.decommitment, EcdsaData);
+        const resultZk = await verify(proof.toJSON(), checker.verificationKey);
+        if (!resultZk) {
+            throw new Error('Unable to verify proof');
+        }
+        return true;
     }
 }
 export default getRequestProof;

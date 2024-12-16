@@ -63,7 +63,7 @@ class ZKON {
      */
 
     async request(req: RequestObject, proofDeferred: boolean = false ): Promise<OracleResponse>  {
-        return getRequestProof(this.apiKey, this.oracleURL, req, proofDeferred);
+        return getRequestProof(this.apiKey, this.oracleURL, req, {proofDeferred});
     }
 
     /**
@@ -72,7 +72,7 @@ class ZKON {
      * @returns 
      */
     async requestStringProof(req: RequestObject, proofDeferred: boolean = false): Promise<OracleResponse>  {
-        return getRequestProof(this.apiKey, this.oracleURL, req, proofDeferred, "string-proof");
+        return getRequestProof(this.apiKey, this.oracleURL, req, { proofDeferred, proofType: "string-proof" } );
     }
 
 }
