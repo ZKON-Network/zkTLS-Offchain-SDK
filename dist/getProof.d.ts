@@ -90,27 +90,37 @@ export interface OracleResponse {
     decommitment: Field;
 }
 /**
+ * **This is an Internal API, not exposed directly.**
+ *
  * Responsible for requesting & fetching proof of proveable-data feed, using the Zkon Oracle Network.
  *
  * @param {string} apiKey - The API Key provided by ZKON. To be used as `x-api-key` in headers.
  * @param {string} oracleURL - Address of the Oracle. Example `127.0.0.1:5000`
  * @param {RequestObject} req - The Object which contains the information which is to be fetched and proved.
- * @param {boolean} proofDeferred - `Optional` parameter which can defer the proof genretaion, making the SDK more versatile.
- *
- * @returns An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
+  @param {Object} [optional] - Optional parameters for the request.
+ * @param {boolean} [optional.proofDeferred=false] - If `true`, the proof generation is deferred.
+ * @param {string} [optional.proofType] - The type of proof to request (e.g., "string-proof", "field-proof").
+ * @returns {Promise<OracleResponse>} An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
  *
  * @example
  * ```ts
  * getRequestProof('foo178xx','http://127.0.0.1:3000/',{
  *   method: "GET",
  *   baseURL: "r-api.e-grains.com/v1/esoy/info",
- *   path: "data,availableSupply"
- * })
+ *   path: "data,availableSupply",
+ * }, {proofDeferred: true, proofType: "field-proof"})
  * ```
  */
 export declare function getRequestProof(apiKey: string, oracleURL: string, req: RequestObject, optional?: {
     proofDeferred?: boolean;
     proofType?: string;
 }): Promise<OracleResponse>;
+/**
+ * Generate the proof from the obtained **_OracleResponse_** object
+ *
+ * @param proofType - The type of proof to request (e.g., "string-proof", "field-proof"). Defaults to "false"
+ * @param oracleResponse - The Object recieved from the **Zkon.request()** or **_Zkon.requestStringProof()_**
+ * @returns {Promise<boolean>} Returns true if the proof is generated & valid, false if otherwise.
+ */
 export declare function generateAndVerifyProof(proofType: string | undefined, oracleResponse: OracleResponse): Promise<boolean>;
 export default getRequestProof;

@@ -11,22 +11,25 @@ class Ecdsa extends createEcdsaV2(Secp256k1) {
 class Scalar extends Secp256k1.Scalar {
 }
 /**
+ * **This is an Internal API, not exposed directly.**
+ *
  * Responsible for requesting & fetching proof of proveable-data feed, using the Zkon Oracle Network.
  *
  * @param {string} apiKey - The API Key provided by ZKON. To be used as `x-api-key` in headers.
  * @param {string} oracleURL - Address of the Oracle. Example `127.0.0.1:5000`
  * @param {RequestObject} req - The Object which contains the information which is to be fetched and proved.
- * @param {boolean} proofDeferred - `Optional` parameter which can defer the proof genretaion, making the SDK more versatile.
- *
- * @returns An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
+  @param {Object} [optional] - Optional parameters for the request.
+ * @param {boolean} [optional.proofDeferred=false] - If `true`, the proof generation is deferred.
+ * @param {string} [optional.proofType] - The type of proof to request (e.g., "string-proof", "field-proof").
+ * @returns {Promise<OracleResponse>} An encapsulated object, which is used to generate a zero-knowledge Kimchi proof, regarding the ECDSA Signature of the TLS-Connection.
  *
  * @example
  * ```ts
  * getRequestProof('foo178xx','http://127.0.0.1:3000/',{
  *   method: "GET",
  *   baseURL: "r-api.e-grains.com/v1/esoy/info",
- *   path: "data,availableSupply"
- * })
+ *   path: "data,availableSupply",
+ * }, {proofDeferred: true, proofType: "field-proof"})
  * ```
  */
 export async function getRequestProof(apiKey, oracleURL, req, optional) {
@@ -67,14 +70,22 @@ export async function getRequestProof(apiKey, oracleURL, req, optional) {
             }
             const maxLengthString = 1000;
             let stringData = String(oracleResponse.publicArguments.dataField);
-            let string_val = stringData.split('').map(x => UInt8.from(x.charCodeAt(0)));
-            for (let i = string_val.length; i < maxLengthString; i++) {
-                string_val.push(UInt8.from(0));
+            const encoder = new TextEncoder();
+            let UTF8Bytes = [];
+            for (let i = 0; i < stringData.length; i++) {
+                const charBytes = encoder.encode(stringData.charAt(i));
+                UTF8Bytes.push(...charBytes);
+            }
+            const byteArray = new Uint8Array(UTF8Bytes); //Range check UInt8
+            console.log(byteArray);
+            let string_utf8 = Array.from(byteArray, (value) => UInt8.from(value));
+            for (let i = string_utf8.length; i < maxLengthString; i++) {
+                string_utf8.push(UInt8.from(0));
             }
             const zkProgram = ZkonZkProgramString;
             const PublicArgumets = new PublicArgumetsString({
                 commitment: oracleResponse.publicArguments.commitment,
-                dataField: string_val
+                dataField: string_utf8
             });
             console.timeLog("Parsing", "PublicArg Parsed");
             console.timeEnd("Parsing");
@@ -121,6 +132,13 @@ export async function getRequestProof(apiKey, oracleURL, req, optional) {
         throw error;
     }
 }
+/**
+ * Generate the proof from the obtained **_OracleResponse_** object
+ *
+ * @param proofType - The type of proof to request (e.g., "string-proof", "field-proof"). Defaults to "false"
+ * @param oracleResponse - The Object recieved from the **Zkon.request()** or **_Zkon.requestStringProof()_**
+ * @returns {Promise<boolean>} Returns true if the proof is generated & valid, false if otherwise.
+ */
 export async function generateAndVerifyProof(proofType = "field-proof", oracleResponse) {
     const EcdsaData = new ECDSAHelper({
         messageHash: new Scalar(BigInt('0x' + oracleResponse.messageHex)),
